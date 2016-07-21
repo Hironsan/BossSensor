@@ -19,12 +19,20 @@ def dense_to_one_hot(labels_dense, num_classes):
         labels_one_hot[i][label_list.index(label)] = 1
     return labels_one_hot
 
-
+"""
 def extract_data(path):
     images, labels = traverse_dir(path)
     labels_one_hot = dense_to_one_hot(labels, len(set(labels)))
     return images, labels_one_hot
+"""
 
+def extract_data(path):
+    import scipy.io
+    mat = scipy.io.loadmat("olivettifaces.mat")
+    images = mat['faces']
+    labels = [i//20 for i in range(images.shape[1])]
+    labels_one_hot = dense_to_one_hot(labels, len(set(labels)))
+    return images.T, labels_one_hot
 
 images = []
 labels = []
@@ -117,7 +125,7 @@ class DataSet(object):
         return self._images[start:end], self._labels[start:end]
 
 
-def read_data_sets(dtype=dtypes.float32, reshape=True):
+def read_data_sets(dtype=dtypes.float32, reshape=False):
     images, labels = extract_data('./data')
     num_images = images.shape[0]
     TRAIN_SIZE = int(num_images * 0.8)
