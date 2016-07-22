@@ -29,10 +29,11 @@ def extract_data(path):
 def extract_data(path):
     import scipy.io
     mat = scipy.io.loadmat("olivettifaces.mat")
-    images = mat['faces']
-    labels = [i//20 for i in range(images.shape[1])]
+    images = mat['faces'].T
+    images = np.array([np.reshape(cv2.resize(np.reshape(image, (64, 64)), (32, 32)), -1) for image in images])
+    labels = [i//20 for i in range(images.shape[0])]
     labels_one_hot = dense_to_one_hot(labels, len(set(labels)))
-    return images.T, labels_one_hot
+    return images, labels_one_hot
 
 images = []
 labels = []
