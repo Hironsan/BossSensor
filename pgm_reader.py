@@ -128,6 +128,11 @@ class DataSet(object):
 
 def read_data_sets(dtype=dtypes.float32, reshape=False):
     images, labels = extract_data('./data')
+    import random
+    for i in range(images.shape[0]):
+        j = random.randint(i, images.shape[0]-1)
+        images[i], images[j] = images[j], images[i]
+        labels[i], labels[j] = labels[j], labels[i]
     num_images = images.shape[0]
     TRAIN_SIZE = int(num_images * 0.8)
     VALIDATION_SIZE = int(num_images * 0.1)
