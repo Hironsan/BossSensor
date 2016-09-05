@@ -61,7 +61,7 @@ def training(loss):
     return train_step
 
 
-dataset = input_data.read_data_sets('data/olivettifaces.mat')
+
 x = tf.placeholder(tf.float32, shape=[None, 1024])
 y_ = tf.placeholder(tf.float32, shape=[None, 40])
 keep_prob = tf.placeholder(tf.float32)
@@ -73,6 +73,7 @@ with tf.Session() as sess:
 
     init = tf.initialize_all_variables()
     sess.run(init)
+    dataset = input_data.read_data_sets('data', sess)
 
     for step in range(1000):
         batch = dataset.train.next_batch(40)

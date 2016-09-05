@@ -13,14 +13,15 @@ def read_image(file_path):
 
 images = []
 labels = []
-def traverse_dir(path):
+def traverse_dir(path, sess):
     for file_or_dir in os.listdir(path):
+        print(file_or_dir)
         abs_path = os.path.abspath(os.path.join(path, file_or_dir))
         if os.path.isdir(abs_path):  # dir
-            traverse_dir(abs_path)
+            traverse_dir(abs_path, sess)
         else:                        # file
             if file_or_dir.endswith('.jpg'):
-                image = read_image_(abs_path)
+                image = read_image_(abs_path, sess)
                 images.append(image)
                 labels.append(path)
     return images, labels
@@ -32,7 +33,7 @@ def traverse_dir(path):
 #reader = tf.TextLineReader()
 #key, val = reader.read(fname_queue)
 #fname, label = tf.decode_csv(val, [["aa"], [1]])
-IMAGE_SIZE = 180
+IMAGE_SIZE = 96
 def read_image_(file_path, sess):
     # 既存ファイルを readモードで読み込み
     img = Image.open(file_path, 'r')
@@ -51,20 +52,21 @@ def read_image_(file_path, sess):
 
 #traverse_dir('./data')
 
-sess = tf.Session()
-init = tf.initialize_all_variables()
-sess.run(init)
-tf.train.start_queue_runners(sess)
+if __name__ == '__main__':
+    sess = tf.Session()
+    init = tf.initialize_all_variables()
+    sess.run(init)
+    tf.train.start_queue_runners(sess)
+    #images, labels = traverse_dir('data', sess)
 
-image = read_image_('./data/boss/64_c.jpg', sess)
-#image = read_image_('./data/boss/4.jpg', sess)
-#image = read_image_('./data/boss/2.jpg', sess)
+"""
+image = read_image_('./data/boss/27.jpg', sess)
 x = sess.run(image)
 print(x)
 print(x.shape)
 import matplotlib.pyplot as plt
 plt.imsave("test.jpg", x)
-
+"""
 
 
 """

@@ -4,6 +4,7 @@ import numpy as np
 from tensorflow.python.framework import dtypes
 from tensorflow.contrib.learn.python.learn.datasets import base
 import scipy.io
+from reader import traverse_dir
 
 
 def dense_to_one_hot(labels_dense, num_classes):
@@ -16,11 +17,9 @@ def dense_to_one_hot(labels_dense, num_classes):
     return labels_one_hot
 
 
-def extract_data(path):
-    mat = scipy.io.loadmat(path)
-    images = mat['faces'].T
-    images = np.array([np.reshape(cv2.resize(np.reshape(image, (64, 64)), (32, 32)), -1) for image in images])
-    labels = [i//10 for i in range(images.shape[0])]
+def extract_data(path, sess):
+    images, labels = traverse_dir(path, sess)
+    images = np.array([np.reshape(image, -1) for image in images])
     labels_one_hot = dense_to_one_hot(labels, len(set(labels)))
     return images, labels_one_hot
 
@@ -84,8 +83,8 @@ class DataSet(object):
         return self._images[start:end], self._labels[start:end]
 
 
-def read_data_sets(path, dtype=dtypes.float32, reshape=False):
-    images, labels = extract_data(path)
+def read_data_sets(path, sess, dtype=dtypes.float32, reshape=False):
+    images, labels = extract_data(path, sess)
     for i in range(images.shape[0]):
         j = random.randint(i, images.shape[0]-1)
         images[i], images[j] = images[j], images[i]
