@@ -62,8 +62,8 @@ def training(loss):
 
 
 
-x = tf.placeholder(tf.float32, shape=[None, 1024])
-y_ = tf.placeholder(tf.float32, shape=[None, 40])
+x = tf.placeholder(tf.float32, shape=[None, 9216, 3])
+y_ = tf.placeholder(tf.float32, shape=[None, 1])
 keep_prob = tf.placeholder(tf.float32)
 
 with tf.Session() as sess:
