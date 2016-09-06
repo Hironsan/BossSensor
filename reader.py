@@ -7,7 +7,7 @@ images = []
 labels = []
 def traverse_dir(path, sess):
     for file_or_dir in os.listdir(path):
-        if len(images) > 100:
+        if len(images) > 2:
             return images, labels
         abs_path = os.path.abspath(os.path.join(path, file_or_dir))
         print(abs_path)
@@ -30,6 +30,7 @@ def read_image_(file_path, sess):
     longest_edge = int(max(h, w))
     image = tf.image.resize_image_with_crop_or_pad(image, longest_edge, longest_edge)
     image = tf.image.resize_image_with_crop_or_pad(image, IMAGE_SIZE, IMAGE_SIZE)
+
     return image
 
 
