@@ -21,10 +21,10 @@ def max_pool_2x2(x):
 
 
 def inference(input_placeholder, keep_prob):
-    W_conv1 = weight_variable([5, 5, 1, 32])
+    W_conv1 = weight_variable([5, 5, 3, 32])
     b_conv1 = bias_variable([32])
 
-    x_image = tf.reshape(input_placeholder, [-1, 32, 32, 1])
+    x_image = tf.reshape(input_placeholder, [-1, 32, 32, 3])
 
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
     h_pool1 = max_pool_2x2(h_conv1)
@@ -43,8 +43,8 @@ def inference(input_placeholder, keep_prob):
 
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-    W_fc2 = weight_variable([1024, 40])
-    b_fc2 = bias_variable([40])
+    W_fc2 = weight_variable([1024, 2])
+    b_fc2 = bias_variable([2])
 
     y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
@@ -62,8 +62,8 @@ def training(loss):
 
 
 
-x = tf.placeholder(tf.float32, shape=[None, 9216, 3])
-y_ = tf.placeholder(tf.float32, shape=[None, 1])
+x = tf.placeholder(tf.float32, shape=[None, 3072])
+y_ = tf.placeholder(tf.float32, shape=[None, 2])
 keep_prob = tf.placeholder(tf.float32)
 
 with tf.Session() as sess:
@@ -79,7 +79,7 @@ with tf.Session() as sess:
         batch = dataset.train.next_batch(40)
         sess.run(training_op, feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
         if step % 100 == 0:
-            print(sess.run(loss, feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0}))
+            print('step: {0}, loss: {1}'.format(step, sess.run(loss, feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})))
 
     correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(y_, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
