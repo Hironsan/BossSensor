@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
 import os.path
-import time
 
-import numpy as np
 import tensorflow as tf
+
+import boss_input
+import boss_model
 
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_dir', '/tmp/boss_train',
+tf.app.flags.DEFINE_string('train_dir', './store',
                            """Directory where to write event logs """
                            """and checkpoint.""")
 tf.app.flags.DEFINE_integer('max_steps', 1000,
@@ -22,70 +22,55 @@ def train():
     """
     Train Boss Face for a number of steps.
     """
-    with tf.Graph().as_default():
+
+    with tf.Session() as sess:
         global_step = tf.Variable(0, trainable=False)
+        x = tf.placeholder(tf.float32, shape=[None, 3072])
+        y_ = tf.placeholder(tf.float32, shape=[None, 2])
+        keep_prob = tf.placeholder(tf.float32)
 
-        # Get images and labels for CIFAR-10.
-        images, labels = cifar10.distorted_inputs()
-
-        # Build a Graph that computes the logits predictions from the
-        # inference model.
-        logits = cifar10.inference(images)
-
-        # Calculate loss.
-        loss = cifar10.loss(logits, labels)
-
-        # Build a Graph that trains the model with one batch of examples and
-        # updates the model parameters.
-        train_op = cifar10.train(loss, global_step)
-
-        # Create a saver.
         saver = tf.train.Saver(tf.all_variables())
 
-        # Build the summary operation based on the TF collection of Summaries.
-        summary_op = tf.merge_all_summaries()
+        output = boss_model.inference(x, keep_prob)
+        loss = boss_model.loss(output, y_)
+        training_op = boss_model.training(loss)
 
-        # Build an initialization operation to run below.
         init = tf.initialize_all_variables()
-
-        # Start running operations on the Graph.
-        sess = tf.Session(config=tf.ConfigProto(
-            log_device_placement=FLAGS.log_device_placement))
         sess.run(init)
+        dataset = boss_input.read_data_sets('data', sess)
 
-        # Start the queue runners.
-        tf.train.start_queue_runners(sess=sess)
-
-        summary_writer = tf.train.SummaryWriter(FLAGS.train_dir, sess.graph)
-
-        for step in range(FLAGS.max_steps):
-            start_time = time.time()
-            _, loss_value = sess.run([train_op, loss])
-            duration = time.time() - start_time
-
-            assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
-
-            if step % 10 == 0:
-                num_examples_per_step = FLAGS.batch_size
-                examples_per_sec = num_examples_per_step / duration
-                sec_per_batch = float(duration)
-
-                format_str = ('%s: step %d, loss = %.2f (%.1f examples/sec; %.3f '
-                              'sec/batch)')
-                print (format_str % (datetime.now(), step, loss_value,
-                                     examples_per_sec, sec_per_batch))
-
+        for step in range(1000):
+            batch = dataset.train.next_batch(40)
+            sess.run(training_op, feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
             if step % 100 == 0:
-                summary_str = sess.run(summary_op)
-                summary_writer.add_summary(summary_str, step)
+                print('step: {0}, loss: {1}'.format(step, sess.run(loss, feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})))
 
             # Save the model checkpoint periodically.
             if step % 1000 == 0 or (step + 1) == FLAGS.max_steps:
                 checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                 saver.save(sess, checkpoint_path, global_step=step)
 
+        correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(y_, 1))
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        print('test accuracy %g' % accuracy.eval(feed_dict={x: dataset.test.images, y_: dataset.test.labels, keep_prob: 1.0}))
 
-def main():
+
+def predict(saver, top_k_op):
+    with tf.Session() as sess:
+        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+        if ckpt and ckpt.model_checkpoint_path:
+            saver.restore(sess, ckpt.model_checkpoint_path)
+            # Assuming model_checkpoint_path looks something like:
+            #   /my-favorite-path/cifar10_train/model.ckpt-0,
+            # extract global_step from it.
+            global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+        else:
+            print('No checkpoint file found')
+            return
+
+        predictions = sess.run([top_k_op])
+
+def main(argv=None):
     if tf.gfile.Exists(FLAGS.train_dir):
         tf.gfile.DeleteRecursively(FLAGS.train_dir)
     tf.gfile.MakeDirs(FLAGS.train_dir)

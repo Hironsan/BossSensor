@@ -1,5 +1,4 @@
 import tensorflow as tf
-import boss_input
 
 
 def weight_variable(shape):
@@ -59,28 +58,3 @@ def loss(output, supervisor_labels_placeholder):
 def training(loss):
     train_step = tf.train.AdamOptimizer(1e-4).minimize(loss)
     return train_step
-
-
-
-x = tf.placeholder(tf.float32, shape=[None, 3072])
-y_ = tf.placeholder(tf.float32, shape=[None, 2])
-keep_prob = tf.placeholder(tf.float32)
-
-with tf.Session() as sess:
-    output = inference(x, keep_prob)
-    loss = loss(output, y_)
-    training_op = training(loss)
-
-    init = tf.initialize_all_variables()
-    sess.run(init)
-    dataset = boss_input.read_data_sets('data', sess)
-
-    for step in range(1000):
-        batch = dataset.train.next_batch(40)
-        sess.run(training_op, feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-        if step % 100 == 0:
-            print('step: {0}, loss: {1}'.format(step, sess.run(loss, feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})))
-
-    correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(y_, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-    print('test accuracy %g' % accuracy.eval(feed_dict={x: dataset.test.images, y_: dataset.test.labels, keep_prob: 1.0}))
