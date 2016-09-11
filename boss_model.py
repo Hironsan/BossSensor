@@ -1,5 +1,5 @@
 import tensorflow as tf
-import input_data
+import boss_input
 
 
 def weight_variable(shape):
@@ -73,7 +73,7 @@ with tf.Session() as sess:
 
     init = tf.initialize_all_variables()
     sess.run(init)
-    dataset = input_data.read_data_sets('data', sess)
+    dataset = boss_input.read_data_sets('data', sess)
 
     for step in range(1000):
         batch = dataset.train.next_batch(40)
