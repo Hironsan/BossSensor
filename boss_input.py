@@ -51,9 +51,17 @@ def dense_to_one_hot(labels_dense, num_classes):
 def extract_data(path, sess):
     images, labels = traverse_dir(path, sess)
     images = np.array([np.reshape(image, -1) for image in images])
+    dic = dict([(label, i) for i, label in enumerate(set(labels))])
+    labels = np.array([dic[label] for label in labels])
+    return images, labels
+
+"""
+def extract_data(path, sess):
+    images, labels = traverse_dir(path, sess)
+    images = np.array([np.reshape(image, -1) for image in images])
     labels_one_hot = dense_to_one_hot(labels, len(set(labels)))
     return images, labels_one_hot
-
+"""
 
 class DataSet(object):
 
