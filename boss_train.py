@@ -16,7 +16,8 @@ tf.app.flags.DEFINE_integer('max_steps', 1000,
                             """Number of batches to run.""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
-
+tf.app.flags.DEFINE_string('checkpoint_dir', './store',
+                           """Directory where to read model checkpoints.""")
 
 def train():
     """
@@ -29,11 +30,11 @@ def train():
         y_ = tf.placeholder(tf.float32, shape=[None, 2])
         keep_prob = tf.placeholder(tf.float32)
 
-        saver = tf.train.Saver(tf.all_variables())
-
         output = boss_model.inference(x, keep_prob)
         loss = boss_model.loss(output, y_)
         training_op = boss_model.training(loss)
+
+        saver = tf.train.Saver(tf.all_variables())
 
         init = tf.initialize_all_variables()
         sess.run(init)
@@ -55,9 +56,19 @@ def train():
         print('test accuracy %g' % accuracy.eval(feed_dict={x: dataset.test.images, y_: dataset.test.labels, keep_prob: 1.0}))
 
 
-def predict(saver, top_k_op):
+def predict():
     with tf.Session() as sess:
+        image = boss_input.read_image_('./data/boss/1.jpg', sess)
+        import numpy as np
+        image = image.astype(np.float32)
+        image = np.multiply(image, 1.0 / 255.0)
+        keep_prob = tf.placeholder(tf.float32)
+        logits = boss_model.inference(image, keep_prob)
+
+        saver = tf.train.Saver()
+
         ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+
         if ckpt and ckpt.model_checkpoint_path:
             saver.restore(sess, ckpt.model_checkpoint_path)
             # Assuming model_checkpoint_path looks something like:
@@ -68,13 +79,15 @@ def predict(saver, top_k_op):
             print('No checkpoint file found')
             return
 
-        predictions = sess.run([top_k_op])
+        #predictions = sess.run([top_k_op])
+
 
 def main(argv=None):
-    if tf.gfile.Exists(FLAGS.train_dir):
-        tf.gfile.DeleteRecursively(FLAGS.train_dir)
-    tf.gfile.MakeDirs(FLAGS.train_dir)
-    train()
+    #if tf.gfile.Exists(FLAGS.train_dir):
+     #   tf.gfile.DeleteRecursively(FLAGS.train_dir)
+    #tf.gfile.MakeDirs(FLAGS.train_dir)
+    #train()
+    predict()
 
 
 if __name__ == '__main__':
