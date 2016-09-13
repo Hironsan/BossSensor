@@ -20,6 +20,7 @@ tf.app.flags.DEFINE_boolean('log_device_placement', False,
 tf.app.flags.DEFINE_string('checkpoint_dir', './store',
                            """Directory where to read model checkpoints.""")
 
+
 def train():
     """
     Train Boss Face for a number of steps.
@@ -59,8 +60,8 @@ def train():
 
 def predict(image=None):
     with tf.Session() as sess:
-        #image = boss_input.conv_image(image, sess)
-        image = boss_input.read_image_('./data/boss/1.jpg', sess)
+        image = boss_input.conv_image(image, sess)
+        #image = boss_input.read_image_('./data/boss/1.jpg', sess)
         #image = boss_input.read_image_('./data/other/Abdel_Nasser_Assidi_0002.jpg', sess)
         global_step = tf.Variable(0, trainable=False)
         image = np.reshape(image, [-1])
@@ -99,7 +100,6 @@ def predict(image=None):
             print('Boss')
         else:
             print('Other')
-
 
 
 class FacePredictor(object):
