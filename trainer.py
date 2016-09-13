@@ -39,6 +39,7 @@ def conv_model(X, y):
 
 if __name__ == '__main__':
     path = './data'
+    """
     with tf.Session() as sess:
         images, labels = extract_data(path, sess)
         labels = tf.reshape(labels, [-1])
@@ -57,6 +58,13 @@ if __name__ == '__main__':
 
     score = metrics.accuracy_score(test_t, classifier.predict(test_x))
     print('Accuracy: {0:f}'.format(score))
+    """
+    with tf.Session() as sess:
+        import boss_input
+        image = boss_input.read_image_('./data/boss/1.jpg', sess)
+        import numpy as np
+        image = np.reshape(image, [-1])
 
-    #new_classifier = learn.TensorFlowEstimator.restore('./store/', n_classes=2)
-    #new_classifier.predict(test_x)
+        classifier = learn.Estimator(model_fn=conv_model, model_dir='./store/')
+        #images = np.array([image])
+        classifier.predict(image)

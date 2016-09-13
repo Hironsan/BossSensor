@@ -60,10 +60,20 @@ def predict():
     with tf.Session() as sess:
         image = boss_input.read_image_('./data/boss/1.jpg', sess)
         import numpy as np
+        global_step = tf.Variable(0, trainable=False)
         image = image.astype(np.float32)
         image = np.multiply(image, 1.0 / 255.0)
+        #keep_prob = tf.placeholder(tf.float32)
+        #logits = boss_model.inference(image, keep_prob)
+
+        x = tf.placeholder(tf.float32, shape=[None, 3072])
+        y_ = tf.placeholder(tf.float32, shape=[None, 2])
         keep_prob = tf.placeholder(tf.float32)
-        logits = boss_model.inference(image, keep_prob)
+
+        output = boss_model.inference(x, keep_prob)
+        loss = boss_model.loss(output, y_)
+        training_op = boss_model.training(loss)
+
 
         saver = tf.train.Saver()
 
@@ -84,7 +94,7 @@ def predict():
 
 def main(argv=None):
     #if tf.gfile.Exists(FLAGS.train_dir):
-     #   tf.gfile.DeleteRecursively(FLAGS.train_dir)
+        #tf.gfile.DeleteRecursively(FLAGS.train_dir)
     #tf.gfile.MakeDirs(FLAGS.train_dir)
     #train()
     predict()
