@@ -59,11 +59,13 @@ def train():
 def predict():
     with tf.Session() as sess:
         image = boss_input.read_image_('./data/boss/1.jpg', sess)
+        image = boss_input.read_image_('./data/other/Abdel_Nasser_Assidi_0002.jpg', sess)
         import numpy as np
         global_step = tf.Variable(0, trainable=False)
+        image = np.reshape(image, [-1])
         image = image.astype(np.float32)
         image = np.multiply(image, 1.0 / 255.0)
-        #keep_prob = tf.placeholder(tf.float32)
+        keep_prob = tf.placeholder(tf.float32)
         #logits = boss_model.inference(image, keep_prob)
 
         x = tf.placeholder(tf.float32, shape=[None, 3072])
@@ -90,6 +92,11 @@ def predict():
             return
 
         #predictions = sess.run([top_k_op])
+        #x = [image]
+
+        feed_dict = {x: np.array([image], dtype=np.float32), keep_prob: 1.0}
+        classification = sess.run(output, feed_dict=feed_dict)
+        print(classification)
 
 
 def main(argv=None):
