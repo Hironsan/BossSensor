@@ -28,6 +28,9 @@ class FaceThread(threading.Thread):
             for self._rect in self._facerect:
                 # 検出した顔を囲む矩形の作成
                 cv2.rectangle(self._frame, tuple(self._rect[0:2]),tuple(self._rect[0:2] + self._rect[2:4]), self._color, thickness=2)
+                # sx, sy = self._rect[0:2]
+                # ex, ey = self._rect[0:2] + self._rect[2:4]
+                # cv2.imwrite("test.jpg", self._frame[sy: ey, sx: ex])
 
                 x, y = self._rect[0:2]
                 width, height = self._rect[2:4]
