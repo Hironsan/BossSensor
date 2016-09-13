@@ -2,7 +2,7 @@
 import cv2
 
 
-def show_image(image_path=''):
+def show_image(image_path='pycharm.png'):
     # 画像の読み込み
     RGB = 1
     img = cv2.imread(image_path, RGB)
@@ -16,3 +16,7 @@ def show_image(image_path=''):
 
     # 作成したウィンドウを全て破棄
     cv2.destroyAllWindows()
+
+
+if __name__ == '__main__':
+    show_image()
