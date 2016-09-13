@@ -38,6 +38,16 @@ def read_image_(file_path, sess):
     return image
 
 
+def conv_image(image, sess):
+    h, w, _ = image.shape
+    longest_edge = int(max(h, w))
+    image = tf.image.resize_image_with_crop_or_pad(image, longest_edge, longest_edge)
+    image = tf.image.resize_image_with_crop_or_pad(image, IMAGE_SIZE, IMAGE_SIZE)
+    image = sess.run(image)
+
+    return image
+
+
 def dense_to_one_hot(labels_dense, num_classes):
     """Convert class labels from scalars to one-hot vectors."""
     num_labels = len(labels_dense)

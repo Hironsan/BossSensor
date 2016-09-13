@@ -2,6 +2,7 @@
 import os.path
 
 import tensorflow as tf
+import numpy as np
 
 import boss_input
 import boss_model
@@ -56,11 +57,11 @@ def train():
         print('test accuracy %g' % accuracy.eval(feed_dict={x: dataset.test.images, y_: dataset.test.labels, keep_prob: 1.0}))
 
 
-def predict():
+def predict(image=None):
     with tf.Session() as sess:
+        #image = boss_input.conv_image(image, sess)
         image = boss_input.read_image_('./data/boss/1.jpg', sess)
-        image = boss_input.read_image_('./data/other/Abdel_Nasser_Assidi_0002.jpg', sess)
-        import numpy as np
+        #image = boss_input.read_image_('./data/other/Abdel_Nasser_Assidi_0002.jpg', sess)
         global_step = tf.Variable(0, trainable=False)
         image = np.reshape(image, [-1])
         image = image.astype(np.float32)
@@ -76,7 +77,6 @@ def predict():
         loss = boss_model.loss(output, y_)
         training_op = boss_model.training(loss)
 
-
         saver = tf.train.Saver()
 
         ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
@@ -91,11 +91,46 @@ def predict():
             print('No checkpoint file found')
             return
 
-        #predictions = sess.run([top_k_op])
-        #x = [image]
-
         feed_dict = {x: np.array([image], dtype=np.float32), keep_prob: 1.0}
         classification = sess.run(output, feed_dict=feed_dict)
+        print(classification)
+        label = np.argmax(classification[0])
+        if label == 1:
+            print('Boss')
+        else:
+            print('Other')
+
+
+
+class FacePredictor(object):
+
+    def __init__(self):
+        self.x = tf.placeholder(tf.float32, shape=[None, 3072])
+        self.y_ = tf.placeholder(tf.float32, shape=[None, 2])
+        self.keep_prob = tf.placeholder(tf.float32)
+
+        self.output = boss_model.inference(self.x, self.keep_prob)
+        self.loss = boss_model.loss(self.output, self.y_)
+        self.training_op = boss_model.training(self.loss)
+
+        saver = tf.train.Saver()
+
+        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+        with tf.Session() as sess:
+            self.sess = sess
+            if ckpt and ckpt.model_checkpoint_path:
+                saver.restore(sess, ckpt.model_checkpoint_path)
+                # Assuming model_checkpoint_path looks something like:
+                #   /my-favorite-path/cifar10_train/model.ckpt-0,
+                # extract global_step from it.
+                global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+            else:
+                print('No checkpoint file found')
+                return
+
+    def predict(self, image):
+        feed_dict = {self.x: np.array([image], dtype=np.float32), self.keep_prob: 1.0}
+        classification = self.sess.run(self.output, feed_dict=feed_dict)
         print(classification)
 
 

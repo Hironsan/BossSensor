@@ -5,7 +5,9 @@ import threading
 from datetime import datetime
 import cv2
 
+from boss_train import predict, FacePredictor
 
+"""
 class FaceThread(threading.Thread):
     def __init__(self, frame):
         super(FaceThread, self).__init__()
@@ -28,12 +30,11 @@ class FaceThread(threading.Thread):
             for self._rect in self._facerect:
                 # 検出した顔を囲む矩形の作成
                 cv2.rectangle(self._frame, tuple(self._rect[0:2]),tuple(self._rect[0:2] + self._rect[2:4]), self._color, thickness=2)
-                # sx, sy = self._rect[0:2]
-                # ex, ey = self._rect[0:2] + self._rect[2:4]
-                # cv2.imwrite("test.jpg", self._frame[sy: ey, sx: ex])
 
                 x, y = self._rect[0:2]
                 width, height = self._rect[2:4]
+                image = self._frame[y: y + height, x: x + width]
+                predict(image)
                 cv2.imwrite("test.jpg", self._frame[y: y + height, x: x + width])
 
             # 現在の時間を取得
@@ -43,7 +44,7 @@ class FaceThread(threading.Thread):
             cv2.imwrite(self._image_path, self._frame)
 
 # カメラをキャプチャ開始
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 while True:
     ret, frame = cap.read()
@@ -62,5 +63,43 @@ while True:
         break
 
 # キャプチャを終了
+cap.release()
+cv2.destroyAllWindows()
+"""
+
+
+cap = cv2.VideoCapture(1)
+cascade_path = "/usr/local/opt/opencv/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml"
+#predictor = FacePredictor()
+while True:
+    ret, frame = cap.read()
+    # グレースケール変換
+    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # カスケード分類器の特徴量を取得する
+    cascade = cv2.CascadeClassifier(cascade_path)
+
+    # 物体認識（顔認識）の実行
+    facerect = cascade.detectMultiScale(frame_gray, scaleFactor=1.2, minNeighbors=3, minSize=(10, 10))
+    if len(facerect) > 0:
+        print('face detected')
+        color = (255, 255, 255)  # 白
+        for rect in facerect:
+            # 検出した顔を囲む矩形の作成
+            cv2.rectangle(frame, tuple(rect[0:2]), tuple(rect[0:2] + rect[2:4]), color, thickness=2)
+
+            x, y = rect[0:2]
+            width, height = rect[2:4]
+            image = frame[y: y + height, x: x + width]
+            #predictor.predict(image)
+            predict(image)
+
+    #10msecキー入力待ち
+    k = cv2.waitKey(100)
+    #Escキーを押されたら終了
+    if k == 27:
+        break
+
+#キャプチャを終了
 cap.release()
 cv2.destroyAllWindows()
