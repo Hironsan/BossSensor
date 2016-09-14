@@ -114,7 +114,7 @@ class Model(object):
                 featurewise_std_normalization=False,  # divide inputs by std of the dataset
                 samplewise_std_normalization=False,   # divide each input by its std
                 zca_whitening=False,                  # apply ZCA whitening
-                rotation_range=0,                     # randomly rotate images in the range (degrees, 0 to 180)
+                rotation_range=180,                     # randomly rotate images in the range (degrees, 0 to 180)
                 width_shift_range=0.1,                # randomly shift images horizontally (fraction of total width)
                 height_shift_range=0.1,               # randomly shift images vertically (fraction of total height)
                 horizontal_flip=True,                 # randomly flip images
@@ -158,12 +158,12 @@ if __name__ == '__main__':
 
     dataset = Dataset()
     dataset.read()
-    """
+
     model = Model()
     model.build_model(dataset)
     model.train(dataset, nb_epoch=10)
     model.save()
-    """
+
     model = Model()
     model.load()
     model.evaluate(dataset)
