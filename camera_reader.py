@@ -72,7 +72,8 @@ if __name__ == '__main__':
     model = Model()
     model.load()
     while True:
-        ret, frame = cap.read()
+        _, frame = cap.read()
+
         # グレースケール変換
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -90,11 +91,13 @@ if __name__ == '__main__':
 
                 x, y = rect[0:2]
                 width, height = rect[2:4]
-                image = frame[y-50: y + height, x: x + width + 50]
-                cv2.imwrite('test.jpg', image)
+                #image = frame[y - 50: y + height, x: x + width + 50]
+                image = frame[y - 50: y + height, x: x + width]
+                #image = frame[y: y + height, x: x + width]
+                #now = datetime.now().strftime('%Y%m%d%H%M%S')
+                #cv2.imwrite(now + '.jpg', image)
                 result = model.predict(image)
-                print(result)
-                if result == 1:  # boss
+                if result == 0:  # boss
                     print('Boss is approaching')
                     show_image()
                 else:

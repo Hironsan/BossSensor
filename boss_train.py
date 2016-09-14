@@ -143,8 +143,10 @@ class Model(object):
         if image.shape != (1, 3, IMAGE_SIZE, IMAGE_SIZE):
             image = resize_with_pad(image)
             image = image.reshape((1, 3, IMAGE_SIZE, IMAGE_SIZE))
+        result = self.model.predict_proba(image)
+        print(result)
         result = self.model.predict_classes(image)
-        # result = self.model.predict_proba(image)
+
 
         return result[0]
 
@@ -156,24 +158,30 @@ if __name__ == '__main__':
 
     dataset = Dataset()
     dataset.read()
-
+    """
     model = Model()
     model.build_model(dataset)
     model.train(dataset, nb_epoch=10)
     model.save()
-
+    """
     model = Model()
     model.load()
     model.evaluate(dataset)
-    for image, label in zip(dataset.X_test, dataset.Y_test):
-        model.predict(image.reshape(1, 3, IMAGE_SIZE, IMAGE_SIZE))
-        print(label)
+    #for image, label in zip(dataset.X_test, dataset.Y_test):
+     #   model.predict(image.reshape(1, 3, IMAGE_SIZE, IMAGE_SIZE))
+      #  print(label)
     """
     import cv2
     import os
-
-    #image = cv2.imread('./data/other/Abdel_Nasser_Assidi_0002.jpg')
-
+    model = Model()
+    model.load()
+    image = cv2.imread('test.jpg')
+    image = resize_with_pad(image)
+    image = image.reshape((1, 3, IMAGE_SIZE, IMAGE_SIZE))
+    result = model.predict(image)
+    print(result)
+    """
+    """
     for file_name in os.listdir('./data/boss'):
         if file_name.endswith('.jpg'):
             print(file_name)

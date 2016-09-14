@@ -61,7 +61,6 @@ def read_image(file_path):
 def extract_data(path):
     images, labels = traverse_dir(path)
     images = np.array(images)
-    dic = dict([(label, i) for i, label in enumerate(set(labels))])
-    labels = np.array([dic[label] for label in labels])
+    labels = np.array([0 if label.endswith('boss') else 1 for label in labels])
 
     return images, labels
