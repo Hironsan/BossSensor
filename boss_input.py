@@ -2,7 +2,6 @@
 import os
 
 import numpy as np
-import tensorflow as tf
 import cv2
 
 
@@ -35,46 +34,32 @@ def resize_with_pad(image, height, width):
 
 images = []
 labels = []
-def traverse_dir(path, sess):
+def traverse_dir(path):
     for file_or_dir in os.listdir(path):
         abs_path = os.path.abspath(os.path.join(path, file_or_dir))
         print(abs_path)
         if os.path.isdir(abs_path):  # dir
-            traverse_dir(abs_path, sess)
+            traverse_dir(abs_path)
         else:                        # file
             if file_or_dir.endswith('.jpg'):
-                image = read_image_(abs_path, sess)
+                image = read_image(abs_path)
                 images.append(image)
                 labels.append(path)
     return images, labels
 
 
 IMAGE_SIZE = 32
-def read_image_(file_path, sess):
-    jpeg_r = tf.read_file(file_path)
-    image = tf.image.decode_jpeg(jpeg_r, channels=3)
-    image.set_shape(sess.run(image).shape)
-    h, w, _ = image.get_shape()
-    longest_edge = int(max(h, w))
-    image = tf.image.resize_image_with_crop_or_pad(image, longest_edge, longest_edge)
-    image = tf.image.resize_image_with_crop_or_pad(image, IMAGE_SIZE, IMAGE_SIZE)
-    image = sess.run(image)
+
+
+def read_image(file_path):
+    image = cv2.imread(file_path)
+    image = resize_with_pad(image, IMAGE_SIZE, IMAGE_SIZE)
 
     return image
 
 
-def conv_image(image, sess):
-    h, w, _ = image.shape
-    longest_edge = int(max(h, w))
-    image = tf.image.resize_image_with_crop_or_pad(image, longest_edge, longest_edge)
-    image = tf.image.resize_image_with_crop_or_pad(image, IMAGE_SIZE, IMAGE_SIZE)
-    image = sess.run(image)
-
-    return image
-
-
-def extract_data(path, sess):
-    images, labels = traverse_dir(path, sess)
+def extract_data(path):
+    images, labels = traverse_dir(path)
     #images = np.array([np.reshape(image, -1) for image in images])
     images = np.array(images)
     dic = dict([(label, i) for i, label in enumerate(set(labels))])

@@ -12,6 +12,7 @@ from keras.layers import Convolution2D, MaxPooling2D
 from keras.optimizers import SGD
 from keras.utils import np_utils
 from keras.models import load_model
+from keras import backend as K
 
 from boss_input import extract_data
 
@@ -26,13 +27,18 @@ class Dataset(object):
         self.Y_test = None
 
     def read(self, img_rows=32, img_cols=32, img_channels=3, nb_classes=2):
-        with tf.Session() as sess:
-            images, labels = extract_data('./data/', sess)
+        images, labels = extract_data('./data/')
         labels = np.reshape(labels, [-1])
         # numpy.reshape
         X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.2, random_state=random.randint(0, 100))
-        X_train = X_train.reshape(X_train.shape[0], 3, img_rows, img_cols)
-        X_test = X_test.reshape(X_test.shape[0], 3, img_rows, img_cols)
+        if K.image_dim_ordering() == 'th':
+            X_train = X_train.reshape(X_train.shape[0], 3, img_rows, img_cols)
+            X_test = X_test.reshape(X_test.shape[0], 3, img_rows, img_cols)
+            input_shape = (3, img_rows, img_cols)
+        else:
+            X_train = X_train.reshape(X_train.shape[0], img_rows, img_cols, 3)
+            X_test = X_test.reshape(X_test.shape[0], img_rows, img_cols, 3)
+            input_shape = (img_rows, img_cols, 3)
 
         # the data, shuffled and split between train and test sets
         print('X_train shape:', X_train.shape)
@@ -128,32 +134,52 @@ class Model(object):
                                      validation_data=(dataset.X_test, dataset.Y_test))
 
     def save(self, file_path=FILE_PATH):
+        print('Model Saved.')
         self.model.save(file_path)
 
     def load(self, file_path=FILE_PATH):
+        print('Model Loaded.')
         self.model = load_model(file_path)
 
     def predict(self, image):
         #result = self.model.predict_proba(self, image, batch_size=32, verbose=1)
         #result = self.model.predict(np.array([image]))
-        result = self.model.predict_proba(np.array([image]))
-        print(result)
+        #result = self.model.predict_proba(np.array([image]))
+        #result = self.model.predict_proba(image)
+        result = self.model.predict_classes(image)
+        return result[0]
 
+    def evaluate(self, dataset):
+        score = self.model.evaluate(dataset.X_test, dataset.Y_test, verbose=0)
+        print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100))
 
 if __name__ == '__main__':
+
+    #dataset = Dataset()
+    #dataset.read()
     """
-    dataset = Dataset()
-    dataset.read()
     model = Model()
     model.build_model(dataset)
-    model.train(dataset)
+    model.train(dataset, nb_epoch=10)
     model.save()
     """
     model = Model()
     model.load()
+    # model.evaluate(dataset)
+    # for image, label in zip(dataset.X_test, dataset.Y_test):
+    #     model.predict(image.reshape(1, 3, 32, 32))
+    #     print(label)
+
     import cv2
-    image = cv2.imread('./data/boss/1.jpg')
+    import os
+
+    #image = cv2.imread('./data/other/Abdel_Nasser_Assidi_0002.jpg')
     from boss_input import resize_with_pad
-    image = resize_with_pad(image, 32, 32)
-    image = np.reshape(image, (3, 32, 32))
-    model.predict(image)
+    for file_name in os.listdir('./data/boss'):
+        if file_name.endswith('.jpg'):
+            print(file_name)
+            image = cv2.imread('./data/boss/' + file_name)
+            image = resize_with_pad(image, 32, 32)
+            image = image.reshape((1, 3, 32, 32))
+            result = model.predict(image)
+            print(result)
