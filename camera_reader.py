@@ -1,6 +1,4 @@
 # -*- coding:utf-8 -*-
-#webカメラの映像から顔を探し白の枠線をつけて保存するプログラム
-
 import threading
 from datetime import datetime
 import cv2
@@ -68,46 +66,46 @@ cap.release()
 cv2.destroyAllWindows()
 """
 
+if __name__ == '__main__':
+    cap = cv2.VideoCapture(1)
+    cascade_path = "/usr/local/opt/opencv/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml"
+    model = Model()
+    model.load()
+    while True:
+        ret, frame = cap.read()
+        # グレースケール変換
+        frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-cap = cv2.VideoCapture(1)
-cascade_path = "/usr/local/opt/opencv/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml"
-model = Model()
-model.load()
-while True:
-    ret, frame = cap.read()
-    # グレースケール変換
-    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # カスケード分類器の特徴量を取得する
+        cascade = cv2.CascadeClassifier(cascade_path)
 
-    # カスケード分類器の特徴量を取得する
-    cascade = cv2.CascadeClassifier(cascade_path)
+        # 物体認識（顔認識）の実行
+        facerect = cascade.detectMultiScale(frame_gray, scaleFactor=1.2, minNeighbors=3, minSize=(10, 10))
+        if len(facerect) > 0:
+            print('face detected')
+            color = (255, 255, 255)  # 白
+            for rect in facerect:
+                # 検出した顔を囲む矩形の作成
+                #cv2.rectangle(frame, tuple(rect[0:2]), tuple(rect[0:2] + rect[2:4]), color, thickness=2)
 
-    # 物体認識（顔認識）の実行
-    facerect = cascade.detectMultiScale(frame_gray, scaleFactor=1.2, minNeighbors=3, minSize=(10, 10))
-    if len(facerect) > 0:
-        print('face detected')
-        color = (255, 255, 255)  # 白
-        for rect in facerect:
-            # 検出した顔を囲む矩形の作成
-            #cv2.rectangle(frame, tuple(rect[0:2]), tuple(rect[0:2] + rect[2:4]), color, thickness=2)
+                x, y = rect[0:2]
+                width, height = rect[2:4]
+                image = frame[y-50: y + height, x: x + width + 50]
+                cv2.imwrite('test.jpg', image)
+                result = model.predict(image)
+                print(result)
+                if result == 1:  # boss
+                    print('Boss is approaching')
+                    show_image()
+                else:
+                    print('Not boss')
 
-            x, y = rect[0:2]
-            width, height = rect[2:4]
-            image = frame[y-50: y + height, x: x + width + 50]
-            cv2.imwrite('test.jpg', image)
-            result = model.predict(image)
-            print(result)
-            if result == 1:  # boss
-                print('Boss is approaching')
-                show_image()
-            else:
-                print('Not boss')
+        #10msecキー入力待ち
+        k = cv2.waitKey(100)
+        #Escキーを押されたら終了
+        if k == 27:
+            break
 
-    #10msecキー入力待ち
-    k = cv2.waitKey(100)
-    #Escキーを押されたら終了
-    if k == 27:
-        break
-
-#キャプチャを終了
-cap.release()
-cv2.destroyAllWindows()
+    #キャプチャを終了
+    cap.release()
+    cv2.destroyAllWindows()

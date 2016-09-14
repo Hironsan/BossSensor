@@ -3,7 +3,6 @@ from __future__ import print_function
 import random
 
 import numpy as np
-import tensorflow as tf
 from sklearn.cross_validation import train_test_split
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
@@ -14,7 +13,7 @@ from keras.utils import np_utils
 from keras.models import load_model
 from keras import backend as K
 
-from boss_input import extract_data, resize_with_pad
+from boss_input import extract_data, resize_with_pad, IMAGE_SIZE
 
 
 class Dataset(object):
@@ -25,7 +24,7 @@ class Dataset(object):
         self.Y_train = None
         self.Y_test = None
 
-    def read(self, img_rows=32, img_cols=32, img_channels=3, nb_classes=2):
+    def read(self, img_rows=IMAGE_SIZE, img_cols=IMAGE_SIZE, img_channels=3, nb_classes=2):
         images, labels = extract_data('./data/')
         labels = np.reshape(labels, [-1])
         # numpy.reshape
@@ -141,11 +140,12 @@ class Model(object):
         self.model = load_model(file_path)
 
     def predict(self, image):
-        #result = self.model.predict_proba(image)
-        if image.shape != (1, 3, 32, 32):
-            image = resize_with_pad(image, 32, 32)
-            image = image.reshape((1, 3, 32, 32))
+        if image.shape != (1, 3, IMAGE_SIZE, IMAGE_SIZE):
+            image = resize_with_pad(image)
+            image = image.reshape((1, 3, IMAGE_SIZE, IMAGE_SIZE))
         result = self.model.predict_classes(image)
+        # result = self.model.predict_proba(image)
+
         return result[0]
 
     def evaluate(self, dataset):
@@ -154,21 +154,21 @@ class Model(object):
 
 if __name__ == '__main__':
 
-    #dataset = Dataset()
-    #dataset.read()
-    """
+    dataset = Dataset()
+    dataset.read()
+
     model = Model()
     model.build_model(dataset)
     model.train(dataset, nb_epoch=10)
     model.save()
-    """
+
     model = Model()
     model.load()
-    # model.evaluate(dataset)
-    # for image, label in zip(dataset.X_test, dataset.Y_test):
-    #     model.predict(image.reshape(1, 3, 32, 32))
-    #     print(label)
-
+    model.evaluate(dataset)
+    for image, label in zip(dataset.X_test, dataset.Y_test):
+        model.predict(image.reshape(1, 3, IMAGE_SIZE, IMAGE_SIZE))
+        print(label)
+    """
     import cv2
     import os
 
@@ -178,7 +178,8 @@ if __name__ == '__main__':
         if file_name.endswith('.jpg'):
             print(file_name)
             image = cv2.imread('./data/boss/' + file_name)
-            image = resize_with_pad(image, 32, 32)
-            image = image.reshape((1, 3, 32, 32))
+            image = resize_with_pad(image)
+            image = image.reshape((1, 3, IMAGE_SIZE, IMAGE_SIZE))
             result = model.predict(image)
             print(result)
+    """

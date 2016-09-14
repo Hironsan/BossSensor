@@ -4,8 +4,10 @@ import os
 import numpy as np
 import cv2
 
+IMAGE_SIZE = 64
 
-def resize_with_pad(image, height, width):
+
+def resize_with_pad(image, height=IMAGE_SIZE, width=IMAGE_SIZE):
 
     def get_padding_size(image):
         h, w, _ = image.shape
@@ -24,7 +26,7 @@ def resize_with_pad(image, height, width):
         return top, bottom, left, right
 
     top, bottom, left, right = get_padding_size(image)
-    BLACK = [0,0,0]
+    BLACK = [0, 0, 0]
     constant = cv2.copyMakeBorder(image, top , bottom, left, right, cv2.BORDER_CONSTANT, value=BLACK)
 
     resized_image = cv2.resize(constant, (height, width))
@@ -45,10 +47,8 @@ def traverse_dir(path):
                 image = read_image(abs_path)
                 images.append(image)
                 labels.append(path)
+
     return images, labels
-
-
-IMAGE_SIZE = 32
 
 
 def read_image(file_path):
@@ -60,8 +60,8 @@ def read_image(file_path):
 
 def extract_data(path):
     images, labels = traverse_dir(path)
-    #images = np.array([np.reshape(image, -1) for image in images])
     images = np.array(images)
     dic = dict([(label, i) for i, label in enumerate(set(labels))])
     labels = np.array([dic[label] for label in labels])
+
     return images, labels
