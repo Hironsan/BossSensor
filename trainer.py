@@ -133,8 +133,9 @@ class Model(object):
     def load(self, file_path=FILE_PATH):
         self.model = load_model(file_path)
 
-    def predict(self):
-        pass
+    def predict(self, image):
+        result = self.model.predict_proba(self, image, batch_size=32, verbose=1)
+        print(result)
 
 
 if __name__ == '__main__':
