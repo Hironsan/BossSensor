@@ -14,8 +14,7 @@ from keras.utils import np_utils
 from keras.models import load_model
 from keras import backend as K
 
-from boss_input import extract_data
-
+from boss_input import extract_data, resize_with_pad
 
 
 class Dataset(object):
@@ -142,10 +141,10 @@ class Model(object):
         self.model = load_model(file_path)
 
     def predict(self, image):
-        #result = self.model.predict_proba(self, image, batch_size=32, verbose=1)
-        #result = self.model.predict(np.array([image]))
-        #result = self.model.predict_proba(np.array([image]))
         #result = self.model.predict_proba(image)
+        if image.shape != (1, 3, 32, 32):
+            image = resize_with_pad(image, 32, 32)
+            image = image.reshape((1, 3, 32, 32))
         result = self.model.predict_classes(image)
         return result[0]
 
@@ -174,7 +173,7 @@ if __name__ == '__main__':
     import os
 
     #image = cv2.imread('./data/other/Abdel_Nasser_Assidi_0002.jpg')
-    from boss_input import resize_with_pad
+
     for file_name in os.listdir('./data/boss'):
         if file_name.endswith('.jpg'):
             print(file_name)

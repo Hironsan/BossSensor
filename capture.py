@@ -5,7 +5,8 @@ import threading
 from datetime import datetime
 import cv2
 
-from boss_train import predict, FacePredictor
+from boss_train import Model
+from image_show import show_image
 
 """
 class FaceThread(threading.Thread):
@@ -70,7 +71,8 @@ cv2.destroyAllWindows()
 
 cap = cv2.VideoCapture(1)
 cascade_path = "/usr/local/opt/opencv/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml"
-#predictor = FacePredictor()
+model = Model()
+model.load()
 while True:
     ret, frame = cap.read()
     # グレースケール変換
@@ -86,13 +88,19 @@ while True:
         color = (255, 255, 255)  # 白
         for rect in facerect:
             # 検出した顔を囲む矩形の作成
-            cv2.rectangle(frame, tuple(rect[0:2]), tuple(rect[0:2] + rect[2:4]), color, thickness=2)
+            #cv2.rectangle(frame, tuple(rect[0:2]), tuple(rect[0:2] + rect[2:4]), color, thickness=2)
 
             x, y = rect[0:2]
             width, height = rect[2:4]
-            image = frame[y: y + height, x: x + width]
-            #predictor.predict(image)
-            predict(image)
+            image = frame[y-50: y + height, x: x + width + 50]
+            cv2.imwrite('test.jpg', image)
+            result = model.predict(image)
+            print(result)
+            if result == 1:  # boss
+                print('Boss is approaching')
+                show_image()
+            else:
+                print('Not boss')
 
     #10msecキー入力待ち
     k = cv2.waitKey(100)
