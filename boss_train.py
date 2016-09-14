@@ -1,146 +1,159 @@
 # -*- coding: utf-8 -*-
-import os.path
+from __future__ import print_function
+import random
 
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
+from sklearn.cross_validation import train_test_split
+from keras.preprocessing.image import ImageDataGenerator
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Convolution2D, MaxPooling2D
+from keras.optimizers import SGD
+from keras.utils import np_utils
+from keras.models import load_model
 
-import boss_input
-import boss_model
-
-
-FLAGS = tf.app.flags.FLAGS
-
-tf.app.flags.DEFINE_string('train_dir', './store',
-                           """Directory where to write event logs """
-                           """and checkpoint.""")
-tf.app.flags.DEFINE_integer('max_steps', 1000,
-                            """Number of batches to run.""")
-tf.app.flags.DEFINE_boolean('log_device_placement', False,
-                            """Whether to log device placement.""")
-tf.app.flags.DEFINE_string('checkpoint_dir', './store',
-                           """Directory where to read model checkpoints.""")
+from boss_input import extract_data
 
 
-def train():
-    """
-    Train Boss Face for a number of steps.
-    """
 
-    with tf.Session() as sess:
-        global_step = tf.Variable(0, trainable=False)
-        x = tf.placeholder(tf.float32, shape=[None, 3072])
-        y_ = tf.placeholder(tf.float32, shape=[None, 2])
-        keep_prob = tf.placeholder(tf.float32)
-
-        output = boss_model.inference(x, keep_prob)
-        loss = boss_model.loss(output, y_)
-        training_op = boss_model.training(loss)
-
-        saver = tf.train.Saver(tf.all_variables())
-
-        init = tf.initialize_all_variables()
-        sess.run(init)
-        dataset = boss_input.read_data_sets('data', sess)
-
-        for step in range(1000):
-            batch = dataset.train.next_batch(40)
-            sess.run(training_op, feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-            if step % 100 == 0:
-                print('step: {0}, loss: {1}'.format(step, sess.run(loss, feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})))
-
-            # Save the model checkpoint periodically.
-            if step % 1000 == 0 or (step + 1) == FLAGS.max_steps:
-                checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
-                saver.save(sess, checkpoint_path, global_step=step)
-
-        correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(y_, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-        print('test accuracy %g' % accuracy.eval(feed_dict={x: dataset.test.images, y_: dataset.test.labels, keep_prob: 1.0}))
-
-
-def predict(image=None):
-    with tf.Session() as sess:
-        image = boss_input.conv_image(image, sess)
-        #image = boss_input.read_image_('./data/boss/1.jpg', sess)
-        #image = boss_input.read_image_('./data/other/Abdel_Nasser_Assidi_0002.jpg', sess)
-        global_step = tf.Variable(0, trainable=False)
-        image = np.reshape(image, [-1])
-        image = image.astype(np.float32)
-        image = np.multiply(image, 1.0 / 255.0)
-        keep_prob = tf.placeholder(tf.float32)
-        #logits = boss_model.inference(image, keep_prob)
-
-        x = tf.placeholder(tf.float32, shape=[None, 3072])
-        y_ = tf.placeholder(tf.float32, shape=[None, 2])
-        keep_prob = tf.placeholder(tf.float32)
-
-        output = boss_model.inference(x, keep_prob)
-        loss = boss_model.loss(output, y_)
-        training_op = boss_model.training(loss)
-
-        saver = tf.train.Saver()
-
-        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
-
-        if ckpt and ckpt.model_checkpoint_path:
-            saver.restore(sess, ckpt.model_checkpoint_path)
-            # Assuming model_checkpoint_path looks something like:
-            #   /my-favorite-path/cifar10_train/model.ckpt-0,
-            # extract global_step from it.
-            global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-        else:
-            print('No checkpoint file found')
-            return
-
-        feed_dict = {x: np.array([image], dtype=np.float32), keep_prob: 1.0}
-        classification = sess.run(output, feed_dict=feed_dict)
-        print(classification)
-        label = np.argmax(classification[0])
-        if label == 1:
-            print('Boss')
-        else:
-            print('Other')
-
-
-class FacePredictor(object):
+class Dataset(object):
 
     def __init__(self):
-        self.x = tf.placeholder(tf.float32, shape=[None, 3072])
-        self.y_ = tf.placeholder(tf.float32, shape=[None, 2])
-        self.keep_prob = tf.placeholder(tf.float32)
+        self.X_train = None
+        self.X_test = None
+        self.Y_train = None
+        self.Y_test = None
 
-        self.output = boss_model.inference(self.x, self.keep_prob)
-        self.loss = boss_model.loss(self.output, self.y_)
-        self.training_op = boss_model.training(self.loss)
-
-        saver = tf.train.Saver()
-
-        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+    def read(self, img_rows=32, img_cols=32, img_channels=3, nb_classes=2):
         with tf.Session() as sess:
-            self.sess = sess
-            if ckpt and ckpt.model_checkpoint_path:
-                saver.restore(sess, ckpt.model_checkpoint_path)
-                # Assuming model_checkpoint_path looks something like:
-                #   /my-favorite-path/cifar10_train/model.ckpt-0,
-                # extract global_step from it.
-                global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-            else:
-                print('No checkpoint file found')
-                return
+            images, labels = extract_data('./data/', sess)
+        labels = np.reshape(labels, [-1])
+        # numpy.reshape
+        X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.2, random_state=random.randint(0, 100))
+        X_train = X_train.reshape(X_train.shape[0], 3, img_rows, img_cols)
+        X_test = X_test.reshape(X_test.shape[0], 3, img_rows, img_cols)
+
+        # the data, shuffled and split between train and test sets
+        print('X_train shape:', X_train.shape)
+        print(X_train.shape[0], 'train samples')
+        print(X_test.shape[0], 'test samples')
+
+        # convert class vectors to binary class matrices
+        Y_train = np_utils.to_categorical(y_train, nb_classes)
+        Y_test = np_utils.to_categorical(y_test, nb_classes)
+
+        X_train = X_train.astype('float32')
+        X_test = X_test.astype('float32')
+        X_train /= 255
+        X_test /= 255
+
+        self.X_train = X_train
+        self.X_test = X_test
+        self.Y_train = Y_train
+        self.Y_test = Y_test
+
+
+class Model(object):
+
+    FILE_PATH = './store/model.h5'
+
+    def __init__(self):
+        self.model = None
+
+    def build_model(self, dataset, nb_classes=2):
+        self.model = Sequential()
+
+        self.model.add(Convolution2D(32, 3, 3, border_mode='same', input_shape=dataset.X_train.shape[1:]))
+        self.model.add(Activation('relu'))
+        self.model.add(Convolution2D(32, 3, 3))
+        self.model.add(Activation('relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Convolution2D(64, 3, 3, border_mode='same'))
+        self.model.add(Activation('relu'))
+        self.model.add(Convolution2D(64, 3, 3))
+        self.model.add(Activation('relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Flatten())
+        self.model.add(Dense(512))
+        self.model.add(Activation('relu'))
+        self.model.add(Dropout(0.5))
+        self.model.add(Dense(nb_classes))
+        self.model.add(Activation('softmax'))
+
+        self.model.summary()
+
+    def train(self, dataset, batch_size=32, nb_epoch=40, data_augmentation=True):
+        # let's train the model using SGD + momentum (how original).
+        sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+        self.model.compile(loss='categorical_crossentropy',
+                           optimizer=sgd,
+                           metrics=['accuracy'])
+        if not data_augmentation:
+            print('Not using data augmentation.')
+            self.model.fit(dataset.X_train, dataset.Y_train,
+                           batch_size=batch_size,
+                           nb_epoch=nb_epoch,
+                           validation_data=(dataset.X_test, dataset.Y_test),
+                           shuffle=True)
+        else:
+            print('Using real-time data augmentation.')
+
+            # this will do preprocessing and realtime data augmentation
+            datagen = ImageDataGenerator(
+                featurewise_center=False,             # set input mean to 0 over the dataset
+                samplewise_center=False,              # set each sample mean to 0
+                featurewise_std_normalization=False,  # divide inputs by std of the dataset
+                samplewise_std_normalization=False,   # divide each input by its std
+                zca_whitening=False,                  # apply ZCA whitening
+                rotation_range=0,                     # randomly rotate images in the range (degrees, 0 to 180)
+                width_shift_range=0.1,                # randomly shift images horizontally (fraction of total width)
+                height_shift_range=0.1,               # randomly shift images vertically (fraction of total height)
+                horizontal_flip=True,                 # randomly flip images
+                vertical_flip=False)                  # randomly flip images
+
+            # compute quantities required for featurewise normalization
+            # (std, mean, and principal components if ZCA whitening is applied)
+            datagen.fit(dataset.X_train)
+
+            # fit the model on the batches generated by datagen.flow()
+            self.model.fit_generator(datagen.flow(dataset.X_train, dataset.Y_train,
+                                                  batch_size=batch_size),
+                                     samples_per_epoch=dataset.X_train.shape[0],
+                                     nb_epoch=nb_epoch,
+                                     validation_data=(dataset.X_test, dataset.Y_test))
+
+    def save(self, file_path=FILE_PATH):
+        self.model.save(file_path)
+
+    def load(self, file_path=FILE_PATH):
+        self.model = load_model(file_path)
 
     def predict(self, image):
-        feed_dict = {self.x: np.array([image], dtype=np.float32), self.keep_prob: 1.0}
-        classification = self.sess.run(self.output, feed_dict=feed_dict)
-        print(classification)
-
-
-def main(argv=None):
-    #if tf.gfile.Exists(FLAGS.train_dir):
-        #tf.gfile.DeleteRecursively(FLAGS.train_dir)
-    #tf.gfile.MakeDirs(FLAGS.train_dir)
-    #train()
-    predict()
+        #result = self.model.predict_proba(self, image, batch_size=32, verbose=1)
+        #result = self.model.predict(np.array([image]))
+        result = self.model.predict_proba(np.array([image]))
+        print(result)
 
 
 if __name__ == '__main__':
-    tf.app.run()
+    """
+    dataset = Dataset()
+    dataset.read()
+    model = Model()
+    model.build_model(dataset)
+    model.train(dataset)
+    model.save()
+    """
+    model = Model()
+    model.load()
+    import cv2
+    image = cv2.imread('./data/boss/1.jpg')
+    from boss_input import resize_with_pad
+    image = resize_with_pad(image, 32, 32)
+    image = np.reshape(image, (3, 32, 32))
+    model.predict(image)
