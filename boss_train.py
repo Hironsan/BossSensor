@@ -20,41 +20,52 @@ class Dataset(object):
 
     def __init__(self):
         self.X_train = None
+        self.X_valid = None
         self.X_test = None
         self.Y_train = None
+        self.Y_valid = None
         self.Y_test = None
 
     def read(self, img_rows=IMAGE_SIZE, img_cols=IMAGE_SIZE, img_channels=3, nb_classes=2):
         images, labels = extract_data('./data/')
         labels = np.reshape(labels, [-1])
         # numpy.reshape
-        X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.2, random_state=random.randint(0, 100))
+        X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.3, random_state=random.randint(0, 100))
+        X_valid, X_test, y_valid, y_test = train_test_split(images, labels, test_size=0.5, random_state=random.randint(0, 100))
         if K.image_dim_ordering() == 'th':
             X_train = X_train.reshape(X_train.shape[0], 3, img_rows, img_cols)
+            X_valid = X_valid.reshape(X_valid.shape[0], 3, img_rows, img_cols)
             X_test = X_test.reshape(X_test.shape[0], 3, img_rows, img_cols)
             input_shape = (3, img_rows, img_cols)
         else:
             X_train = X_train.reshape(X_train.shape[0], img_rows, img_cols, 3)
+            X_valid = X_valid.reshape(X_valid.shape[0], img_rows, img_cols, 3)
             X_test = X_test.reshape(X_test.shape[0], img_rows, img_cols, 3)
             input_shape = (img_rows, img_cols, 3)
 
         # the data, shuffled and split between train and test sets
         print('X_train shape:', X_train.shape)
         print(X_train.shape[0], 'train samples')
+        print(X_valid.shape[0], 'valid samples')
         print(X_test.shape[0], 'test samples')
 
         # convert class vectors to binary class matrices
         Y_train = np_utils.to_categorical(y_train, nb_classes)
+        Y_valid = np_utils.to_categorical(y_valid, nb_classes)
         Y_test = np_utils.to_categorical(y_test, nb_classes)
 
         X_train = X_train.astype('float32')
+        X_valid = X_valid.astype('float32')
         X_test = X_test.astype('float32')
         X_train /= 255
+        X_valid /= 255
         X_test /= 255
 
         self.X_train = X_train
+        self.X_valid = X_valid
         self.X_test = X_test
         self.Y_train = Y_train
+        self.Y_valid = Y_valid
         self.Y_test = Y_test
 
 
@@ -102,7 +113,7 @@ class Model(object):
             self.model.fit(dataset.X_train, dataset.Y_train,
                            batch_size=batch_size,
                            nb_epoch=nb_epoch,
-                           validation_data=(dataset.X_test, dataset.Y_test),
+                           validation_data=(dataset.X_valid, dataset.Y_valid),
                            shuffle=True)
         else:
             print('Using real-time data augmentation.')
@@ -114,9 +125,9 @@ class Model(object):
                 featurewise_std_normalization=False,  # divide inputs by std of the dataset
                 samplewise_std_normalization=False,   # divide each input by its std
                 zca_whitening=False,                  # apply ZCA whitening
-                rotation_range=180,                     # randomly rotate images in the range (degrees, 0 to 180)
-                width_shift_range=0.1,                # randomly shift images horizontally (fraction of total width)
-                height_shift_range=0.1,               # randomly shift images vertically (fraction of total height)
+                rotation_range=20,                     # randomly rotate images in the range (degrees, 0 to 180)
+                width_shift_range=0.2,                # randomly shift images horizontally (fraction of total width)
+                height_shift_range=0.2,               # randomly shift images vertically (fraction of total height)
                 horizontal_flip=True,                 # randomly flip images
                 vertical_flip=False)                  # randomly flip images
 
@@ -129,7 +140,7 @@ class Model(object):
                                                   batch_size=batch_size),
                                      samples_per_epoch=dataset.X_train.shape[0],
                                      nb_epoch=nb_epoch,
-                                     validation_data=(dataset.X_test, dataset.Y_test))
+                                     validation_data=(dataset.X_valid, dataset.Y_valid))
 
     def save(self, file_path=FILE_PATH):
         print('Model Saved.')
@@ -143,10 +154,11 @@ class Model(object):
         if image.shape != (1, 3, IMAGE_SIZE, IMAGE_SIZE):
             image = resize_with_pad(image)
             image = image.reshape((1, 3, IMAGE_SIZE, IMAGE_SIZE))
+        image = image.astype('float32')
+        image /= 255
         result = self.model.predict_proba(image)
         print(result)
         result = self.model.predict_classes(image)
-
 
         return result[0]
 
@@ -155,7 +167,7 @@ class Model(object):
         print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100))
 
 if __name__ == '__main__':
-
+    #"""
     dataset = Dataset()
     dataset.read()
 
@@ -167,20 +179,26 @@ if __name__ == '__main__':
     model = Model()
     model.load()
     model.evaluate(dataset)
+
     #for image, label in zip(dataset.X_test, dataset.Y_test):
      #   model.predict(image.reshape(1, 3, IMAGE_SIZE, IMAGE_SIZE))
       #  print(label)
-    """
+    #"""
+
     import cv2
     import os
-    model = Model()
-    model.load()
-    image = cv2.imread('test.jpg')
+    #model = Model()
+    #model.load()
+    image = cv2.imread('20160915100019.jpg')
+    image = cv2.imread('face.jpg')
     image = resize_with_pad(image)
+    #image = image.astype('float32')
+    #image /= 255
     image = image.reshape((1, 3, IMAGE_SIZE, IMAGE_SIZE))
     result = model.predict(image)
     print(result)
-    """
+
+
     """
     for file_name in os.listdir('./data/boss'):
         if file_name.endswith('.jpg'):
