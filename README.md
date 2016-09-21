@@ -1,6 +1,8 @@
 # BossSensor
 Hide screen when boss is approaching.
 
+## Demo
+
 ## Requirements
 
 * WebCamera
@@ -8,7 +10,21 @@ Hide screen when boss is approaching.
 * OSX
 * virtualenv
 
-## Installation
+## Usage
+First, Train boss image.
+
+```
+$ python boss_train.py
+```
+
+
+Second, start BossSensor. 
+
+```
+$ python camera_reader.py
+```
+
+## Install
 install OpenCV
 
 install virtualenv
@@ -19,8 +35,11 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Execution
 
-```
-python run.py
-```
+## Licence
+
+[MIT](https://github.com/Hironsan/BossSensor/blob/master/LICENSE)
+
+## Author
+
+[Hironsan](https://github.com/Hironsan)
