@@ -20,6 +20,9 @@ If image is classified as the Boss, monitor changes.
 * python3.5
 * OSX
 * virtualenv
+* Many boss image and other person image
+
+Put image into [data/boss](https://github.com/Hironsan/BossSensor/tree/master/data/boss) and [data/other](https://github.com/Hironsan/BossSensor/tree/master/data/other).
 
 ## Usage
 First, Train boss image.

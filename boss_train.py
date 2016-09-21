@@ -167,7 +167,6 @@ class Model(object):
         print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100))
 
 if __name__ == '__main__':
-    #"""
     dataset = Dataset()
     dataset.read()
 
@@ -179,33 +178,3 @@ if __name__ == '__main__':
     model = Model()
     model.load()
     model.evaluate(dataset)
-
-    #for image, label in zip(dataset.X_test, dataset.Y_test):
-     #   model.predict(image.reshape(1, 3, IMAGE_SIZE, IMAGE_SIZE))
-      #  print(label)
-    #"""
-
-    import cv2
-    import os
-    #model = Model()
-    #model.load()
-    image = cv2.imread('20160915100019.jpg')
-    image = cv2.imread('face.jpg')
-    image = resize_with_pad(image)
-    #image = image.astype('float32')
-    #image /= 255
-    image = image.reshape((1, 3, IMAGE_SIZE, IMAGE_SIZE))
-    result = model.predict(image)
-    print(result)
-
-
-    """
-    for file_name in os.listdir('./data/boss'):
-        if file_name.endswith('.jpg'):
-            print(file_name)
-            image = cv2.imread('./data/boss/' + file_name)
-            image = resize_with_pad(image)
-            image = image.reshape((1, 3, IMAGE_SIZE, IMAGE_SIZE))
-            result = model.predict(image)
-            print(result)
-    """
