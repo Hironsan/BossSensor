@@ -39,16 +39,17 @@ $ python camera_reader.py
 ```
 
 ## Install
-install OpenCV
-
-install virtualenv
+Install OpenCV, PyQt4, Anaconda.
 
 ```
-virtualenv venv --python=python3.5
-source venv/bin/activate
+conda create -n venv python=3.5
+source activate venv
+conda install -c https://conda.anaconda.org/menpo opencv3
+conda install -c conda-forge tensorflow
 pip install -r requirements.txt
 ```
 
+Change Keras backend from Theano to TensorFlow. 
 
 ## Licence
 

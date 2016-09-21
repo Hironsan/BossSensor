@@ -6,7 +6,7 @@ from image_show import show_image
 
 
 if __name__ == '__main__':
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
     cascade_path = "/usr/local/opt/opencv/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml"
     model = Model()
     model.load()
