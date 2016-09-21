@@ -22,7 +22,7 @@ If image is classified as the Boss, monitor changes.
 * Anaconda
 * Many boss image and other person image
 
-Put image into [data/boss](https://github.com/Hironsan/BossSensor/tree/master/data/boss) and [data/other](https://github.com/Hironsan/BossSensor/tree/master/data/other).
+Put images into [data/boss](https://github.com/Hironsan/BossSensor/tree/master/data/boss) and [data/other](https://github.com/Hironsan/BossSensor/tree/master/data/other).
 
 ## Usage
 First, Train boss image.
