@@ -1,16 +1,16 @@
 # BossSensor
-Hide screen when boss is approaching.
+Hide your screen when your boss is approaching.
 
 ## Demo
-Boss stands up. He is approaching.
+The boss stands up. He is approaching.
 
 ![standup](https://github.com/Hironsan/BossSensor/blob/master/resource_for_readme/standup.jpg)
 
-When he is approaching, fetch face images and classify image.
+When he is approaching, the program fetches face images and classifies the image.
  
 ![approaching](https://github.com/Hironsan/BossSensor/blob/master/resource_for_readme/approach.jpg)
 
-If image is classified as the Boss, monitor changes.
+If the image is classified as the Boss, it will monitor changes.
 
 ![editor](https://github.com/Hironsan/BossSensor/blob/master/resource_for_readme/editor.jpg)
 
@@ -20,7 +20,7 @@ If image is classified as the Boss, monitor changes.
 * Python3.5
 * OSX
 * Anaconda
-* Many boss image and other person image
+* Lots of images of your boss and other person image
 
 Put images into [data/boss](https://github.com/Hironsan/BossSensor/tree/master/data/boss) and [data/other](https://github.com/Hironsan/BossSensor/tree/master/data/other).
 
